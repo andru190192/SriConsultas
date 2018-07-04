@@ -153,13 +153,14 @@ public class App {
 
 		listaCabecera.add("SListado de Ruc");
 		listaCabecera.add("S");
-		listaCuerpo.add("SRuc" + "¬" + "SRazon Social" + "¬" + "SNombre Comercial" + "¬" + "SClase" + "¬"
-				+ "SContabilidad" + "¬" + "STipo" + "¬" + "SDireccion" + "¬" + "SActividad");
+		listaCuerpo.add("SRuc" + "¬" + "SRazon Social" + "¬" + "SNombre Comercial" + "¬" + "STipo" + "¬" + "SClase"
+				+ "¬" + "SContabilidad" + "¬" + "SSub Tipo" + "¬" + "SDireccion" + "¬" + "SActividad");
 
 		for (Contribuyente per : listContribuyente) {
 			listaCuerpo.add((per.getNumeroRuc() == null ? "S" : "S" + per.getNumeroRuc().toString()) + "¬"
 					+ (per.getRazonSocial() == null ? "S" : "S" + per.getRazonSocial().toString()) + "¬"
 					+ (per.getNombreComercial() == null ? "S" : "S" + per.getNombreComercial().toString()) + "¬"
+					+ (per.getPersonaSociedad() == null ? "S" : "S" + per.getPersonaSociedad().toString()) + "¬"
 					+ (per.getClaseContribuyente() == null ? "S" : "S" + per.getClaseContribuyente().toString()) + "¬"
 					+ (per.getObligado() == null ? "S" : "S" + per.getObligado().toString()) + "¬"
 					+ (per.getSubtipoContribuyente() == null ? "S" : "S" + per.getSubtipoContribuyente().toString())
