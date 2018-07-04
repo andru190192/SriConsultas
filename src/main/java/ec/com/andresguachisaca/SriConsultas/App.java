@@ -20,8 +20,10 @@ import com.squareup.okhttp.Response;
 public class App {
 
 	private static final String FILEINPUT = "entrada.txt";
+	private static final String FILEINPUTCEDULAS = "entradaCedulas.txt";
 	private static final String URL = "https://declaraciones.sri.gob.ec/sri-catastro-sujeto-servicio-internet/rest/ConsolidadoContribuyente/obtenerPorNumerosRuc?=&ruc=";
 	private static final String URLESTABLECIMIENTOS = "https://declaraciones.sri.gob.ec/sri-catastro-sujeto-servicio-internet/rest/Establecimiento/consultarPorNumeroRuc?numeroRuc=";
+	private static final String URL_REGISTROCIVIL_SRI = "https://declaraciones.sri.gob.ec/sri-registro-civil-servicio-internet/rest/DatosRegistroCivil/obtenerPorNumeroIdentificacion?numeroIdentificacion=";
 
 	// private static final String URLEXISTERUC =
 	// "https://declaraciones.sri.gob.ec/sri-catastro-sujeto-servicio-internet/rest/ConsolidadoContribuyente/existePorNumeroRuc?numeroRuc=0791793041001";
@@ -29,7 +31,7 @@ public class App {
 	public static void main(String[] args) {
 		try {
 			escribir("", true);
-			List<String> listRuc = getListRuc(FILEINPUT);
+			List<String> listRuc = getListEntrada(FILEINPUT);
 			List<Contribuyente> listContribuyente = new ArrayList<Contribuyente>();
 			listRuc.forEach(ruc -> {
 				if (ruc.length() == 13) {
@@ -53,10 +55,37 @@ public class App {
 					escribir("El ruc " + ruc + " no existe", false);
 				}
 			});
-			Desktop.getDesktop().open(new File(exportarExcel(listContribuyente)));
+			Desktop.getDesktop().open(new File(exportarExcelContribuyentes(listContribuyente)));
+			Desktop.getDesktop().open(new File(exportarExcelPersonas(getNombresPorCedula())));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	public static List<Persona> getNombresPorCedula() throws FileNotFoundException, IOException {
+		List<String> listCedulas = getListEntrada(FILEINPUTCEDULAS);
+		List<Persona> listPersona = new ArrayList<Persona>();
+		listCedulas.forEach(cedula -> {
+			if (cedula.length() == 10) {
+				Response response;
+				try {
+					response = getResponse(URL_REGISTROCIVIL_SRI + cedula);
+					if (response.code() == 200) {
+						String stringJson = response.body().string();
+						System.out.println("persona " + stringJson);
+						Persona persona = convertStringJsonToPersona(stringJson);
+						listPersona.add(persona);
+					} else {
+						escribir("La cedula " + cedula + " no existe", false);
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			} else {
+				escribir("La cedula " + cedula + " no existe", false);
+			}
+		});
+		return listPersona;
 	}
 
 	public static Response getResponse(String url) throws Exception {
@@ -74,6 +103,12 @@ public class App {
 		return list;
 	}
 
+	public static Persona convertStringJsonToPersona(String jsonInString) {
+		Gson gson = new Gson();
+		Persona persona = gson.fromJson(jsonInString, Persona.class);
+		return persona;
+	}
+
 	public static Establecimiento convertStringJsonToEstablecimiento(String data) {
 		Gson gson = new Gson();
 		List<Establecimiento> list = gson.fromJson(data, new TypeToken<List<Establecimiento>>() {
@@ -81,7 +116,7 @@ public class App {
 		return list.get(0);
 	}
 
-	public static List<String> getListRuc(String archivo) throws FileNotFoundException, IOException {
+	public static List<String> getListEntrada(String archivo) throws FileNotFoundException, IOException {
 		String cadena;
 		FileReader f = new FileReader(archivo);
 		BufferedReader b = new BufferedReader(f);
@@ -112,7 +147,7 @@ public class App {
 		}
 	}
 
-	public static String exportarExcel(List<Contribuyente> listContribuyente) {
+	public static String exportarExcelContribuyentes(List<Contribuyente> listContribuyente) {
 		List<String> listaCabecera = new ArrayList<String>();
 		List<String> listaCuerpo = new ArrayList<String>();
 
@@ -121,19 +156,34 @@ public class App {
 		listaCuerpo.add("SRuc" + "¬" + "SRazon Social" + "¬" + "SNombre Comercial" + "¬" + "SClase" + "¬"
 				+ "SContabilidad" + "¬" + "STipo" + "¬" + "SDireccion" + "¬" + "SActividad");
 
-		for (Contribuyente cyt : listContribuyente) {
-			listaCuerpo.add((cyt.getNumeroRuc() == null ? "S" : "S" + cyt.getNumeroRuc().toString()) + "¬"
-					+ (cyt.getRazonSocial() == null ? "S" : "S" + cyt.getRazonSocial().toString()) + "¬"
-					+ (cyt.getNombreComercial() == null ? "S" : "S" + cyt.getNombreComercial().toString()) + "¬"
-					+ (cyt.getClaseContribuyente() == null ? "S" : "S" + cyt.getClaseContribuyente().toString()) + "¬"
-					+ (cyt.getObligado() == null ? "S" : "S" + cyt.getObligado().toString()) + "¬"
-					+ (cyt.getSubtipoContribuyente() == null ? "S" : "S" + cyt.getSubtipoContribuyente().toString())
+		for (Contribuyente per : listContribuyente) {
+			listaCuerpo.add((per.getNumeroRuc() == null ? "S" : "S" + per.getNumeroRuc().toString()) + "¬"
+					+ (per.getRazonSocial() == null ? "S" : "S" + per.getRazonSocial().toString()) + "¬"
+					+ (per.getNombreComercial() == null ? "S" : "S" + per.getNombreComercial().toString()) + "¬"
+					+ (per.getClaseContribuyente() == null ? "S" : "S" + per.getClaseContribuyente().toString()) + "¬"
+					+ (per.getObligado() == null ? "S" : "S" + per.getObligado().toString()) + "¬"
+					+ (per.getSubtipoContribuyente() == null ? "S" : "S" + per.getSubtipoContribuyente().toString())
 					+ "¬"
-					+ (cyt.getEstablecimiento().getDireccionCompleta() == null ? "S"
-							: "S" + cyt.getEstablecimiento().getDireccionCompleta().toString())
-					+ "¬" + (cyt.getActividadContribuyente() == null ? "S"
-							: "S" + cyt.getActividadContribuyente().toString()));
+					+ (per.getEstablecimiento().getDireccionCompleta() == null ? "S"
+							: "S" + per.getEstablecimiento().getDireccionCompleta().toString())
+					+ "¬" + (per.getActividadContribuyente() == null ? "S"
+							: "S" + per.getActividadContribuyente().toString()));
 		}
-		return UtilsExcel.crearExcel(listaCabecera, listaCuerpo, "OroCodigo Cia. Ltda.");
+		return UtilsExcel.crearExcel(listaCabecera, listaCuerpo, "OroCodigo Cia. Ltda.", "Contribuyentes");
+	}
+
+	public static String exportarExcelPersonas(List<Persona> listPersona) {
+		List<String> listaCabecera = new ArrayList<String>();
+		List<String> listaCuerpo = new ArrayList<String>();
+
+		listaCabecera.add("SListado de Cedulas");
+		listaCabecera.add("S");
+		listaCuerpo.add("SIdentificacion" + "¬" + "SNombres");
+
+		for (Persona per : listPersona) {
+			listaCuerpo.add((per.getIdentificacion() == null ? "S" : "S" + per.getIdentificacion().toString()) + "¬"
+					+ "¬" + (per.getNombreCompleto() == null ? "S" : "S" + per.getNombreCompleto().toString()));
+		}
+		return UtilsExcel.crearExcel(listaCabecera, listaCuerpo, "OroCodigo Cia. Ltda.", "Personas");
 	}
 }

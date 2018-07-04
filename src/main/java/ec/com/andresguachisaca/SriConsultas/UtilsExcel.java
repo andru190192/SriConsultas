@@ -32,8 +32,10 @@ public class UtilsExcel {
 		}
 	}
 
-	public static String crearExcel(List<String> listaCabecera, List<String> listaCuerpo, String namesheet) {
+	public static String crearExcel(List<String> listaCabecera, List<String> listaCuerpo, String namesheet,
+			String nombreXLS) {
 		try {
+
 			HSSFWorkbook wb = new HSSFWorkbook();
 			HSSFSheet sheet = wb.createSheet(namesheet);
 			styleStringCabecera = wb.createCellStyle();
@@ -48,9 +50,9 @@ public class UtilsExcel {
 			for (int i = 0; i < listaCabecera.size() + listaCuerpo.size(); i++) {
 				String fila = "";
 				if (i < listaCabecera.size()) {
-					fila = (String) listaCabecera.get(i);
+					fila = listaCabecera.get(i);
 				} else {
-					fila = (String) listaCuerpo.get(i - listaCabecera.size());
+					fila = listaCuerpo.get(i - listaCabecera.size());
 				}
 				StringTokenizer st = new StringTokenizer(fila, "¬");
 				row = sheet.createRow((short) i);
@@ -111,11 +113,10 @@ public class UtilsExcel {
 				sheet.autoSizeColumn((short) i);
 			}
 
-			String nombreXLS = "Salida.xls";
-			FileOutputStream fileOut = new FileOutputStream(nombreXLS);
+			FileOutputStream fileOut = new FileOutputStream(nombreXLS + ".xls");
 			wb.write(fileOut);
 			fileOut.close();
-			return nombreXLS;
+			return nombreXLS + ".xls";
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
